@@ -1,32 +1,37 @@
 # mini-marketplace-products
 
-Tiny demo: in-memory NetApp-style marketplace products and **two read APIs** (Go). Use Node only to run via npm.
+Demo HTTP service: in-memory NetApp-style marketplace products, JSON APIs, and a small HTML UI.
 
-## Run
+## Requirements
 
-```bash
-npm start
-# or: go run ./cmd/server
-```
+- Go **1.21+**
 
-Server: `http://localhost:8080` (override with `PORT`).
+## Commands
 
-**In the browser:** open **http://localhost:8080/** — you’ll see a table of products; click a row for detail (loaded from the API).
+| Command | Action |
+|---------|--------|
+| `make run` | Start server at **http://127.0.0.1:8080/** |
+| `PORT=3000 make run` | Other port |
+| `make` | Run tests and build `bin/server` |
+| `make test` | Tests only |
 
-## APIs
+Also: `go run ./cmd/server`, `npm start`, `npm test`.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/products` | All products (JSON array) |
-| `GET` | `/api/products/{id}` | One product, e.g. `np-aws-console` |
+## HTTP
+
+| Method | Path | Response |
+|--------|------|----------|
+| GET | `/` | HTML UI |
+| GET | `/api/health` | `{"status":"ok"}` |
+| GET | `/api/products` | JSON array of products |
+| GET | `/api/products/{id}` | One product or 404 |
 
 ## Layout
 
 ```
-cmd/server/main.go    # HTTP server
-internal/data/        # in-memory product list
-internal/models/      # JSON shape
-internal/web/         # UI (embedded HTML)
+cmd/server/main.go
+internal/httpserver/   # HTTP router and handlers
+internal/data/         # In-memory catalog
+internal/models/       # Product model
+internal/web/          # Embedded index.html
 ```
-
-Requires **Go 1.22+** (path patterns). For CI see `.github/workflows/ci.yml`.

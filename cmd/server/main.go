@@ -1,58 +1,30 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
-	"github.com/netapp/mini-marketplace-products/internal/data"
-	"github.com/netapp/mini-marketplace-products/internal/models"
-	"github.com/netapp/mini-marketplace-products/internal/web"
+	"github.com/netapp/mini-marketplace-products/internal/httpserver"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/products", handleListProducts)
-	mux.HandleFunc("GET /api/products/{id}", handleGetProduct)
-	mux.HandleFunc("GET /", handleIndex)
-
-	addr := ":8080"
-	if p := os.Getenv("PORT"); p != "" {
-		addr = ":" + p
-	}
-	log.Printf("open in browser: http://localhost%s/", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	addr := address()
+	h := httpserver.New()
+	log.Println("mini-marketplace-products")
+	log.Printf("  http://127.0.0.1%s/\n", addr)
+	log.Fatal(http.ListenAndServe(addr, h))
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
+func address() string {
+	p := strings.TrimSpace(os.Getenv("PORT"))
+	switch {
+	case p == "":
+		return ":8080"
+	case strings.HasPrefix(p, ":"):
+		return p
+	default:
+		return ":" + p
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write(web.IndexHTML)
-}
-
-func handleListProducts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(data.Products)
-}
-
-func handleGetProduct(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	var found *models.Product
-	for i := range data.Products {
-		if data.Products[i].ID == id {
-			found = &data.Products[i]
-			break
-		}
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if found == nil {
-		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "not found"})
-		return
-	}
-	_ = json.NewEncoder(w).Encode(found)
 }

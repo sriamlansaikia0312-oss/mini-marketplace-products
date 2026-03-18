@@ -1,179 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mini Marketplace — NetApp products</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini marketplace — products</title>
   <style>
     :root {
       --bg: #0f1419;
-      --panel: #1a2332;
-      --text: #e6edf3;
-      --muted: #8b9cb3;
-      --accent: #0067c5;
-      --row: #243044;
+      --card: #1a2332;
+      --fg: #e6edf3;
+      --dim: #8b9cb3;
+      --link: #58a6ff;
+      --line: #2d3a4d;
     }
     * { box-sizing: border-box; }
     body {
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
       margin: 0;
       min-height: 100vh;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
       line-height: 1.5;
     }
     header {
-      background: var(--panel);
-      border-bottom: 1px solid #2d3a4d;
       padding: 1.25rem 1.5rem;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
     }
-    header h1 { margin: 0; font-size: 1.35rem; font-weight: 600; }
-    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
-    main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
-    .status {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 1rem;
-    }
-    .status.err { color: #f85149; }
+    h1 { margin: 0; font-size: 1.25rem; }
+    header p { margin: 0.25rem 0 0; color: var(--dim); font-size: 0.875rem; }
+    main { max-width: 56rem; margin: 0 auto; padding: 1.5rem; }
+    #msg { margin: 0 0 1rem; font-size: 0.875rem; color: var(--dim); }
+    #msg.err { color: #f85149; }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: var(--panel);
+      background: var(--card);
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,.25);
     }
-    th, td { text-align: left; padding: 0.75rem 1rem; }
+    th, td { padding: 0.65rem 1rem; text-align: left; }
     th {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--dim);
       background: #243044;
-      color: var(--muted);
-      font-weight: 600;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
     }
-    tr:nth-child(even) td { background: var(--row); }
-    tr:hover td { background: #2a3d56; }
-    .cloud {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
+    tbody tr:nth-child(even) { background: #243044; }
+    tbody tr { cursor: pointer; }
+    tbody tr:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; }
+    .tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
       border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
       text-transform: uppercase;
     }
-    .cloud.aws { background: #232f3e; color: #ff9900; }
-    .cloud.azure { background: #0078d4; color: #fff; }
-    .cloud.gcp { background: #1a73e8; color: #fff; }
-    code { font-size: 0.85em; color: #79c0ff; }
-    .detail {
-      margin-top: 1.5rem;
-      padding: 1rem 1.25rem;
-      background: var(--panel);
-      border-radius: 8px;
-      border: 1px solid #2d3a4d;
+    .tag.aws { background: #232f3e; color: #ff9900; }
+    .tag.azure { background: #0078d4; color: #fff; }
+    .tag.gcp { background: #1a73e8; color: #fff; }
+    code { color: var(--link); font-size: 0.85em; }
+    #panel {
       display: none;
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
     }
-    .detail.visible { display: block; }
-    .detail h2 { margin: 0 0 0.75rem; font-size: 1rem; }
-    .detail dl { margin: 0; display: grid; grid-template-columns: 100px 1fr; gap: 0.35rem 1rem; }
-    .detail dt { color: var(--muted); }
+    #panel.open { display: block; }
+    #panel h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+    #panel dl { margin: 0; display: grid; grid-template-columns: 5rem 1fr; gap: 0.25rem 1rem; }
+    #panel dt { color: var(--dim); }
     footer {
       text-align: center;
       padding: 2rem;
-      color: var(--muted);
       font-size: 0.8rem;
+      color: var(--dim);
     }
-    a { color: var(--accent); }
+    footer a { color: var(--link); }
   </style>
 </head>
 <body>
   <header>
-    <h1>Mini Marketplace Control Plane</h1>
-    <p>In-memory NetApp-style product listings (demo)</p>
+    <h1>Mini marketplace</h1>
+    <p>NetApp-style listings (in-memory demo)</p>
   </header>
   <main>
-    <p class="status" id="status">Loading…</p>
-    <table id="tbl" style="display:none">
+    <p id="msg" role="status">Loading…</p>
+    <table id="grid" hidden>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Cloud</th>
-          <th>SKU</th>
-          <th>Family</th>
+          <th scope="col">ID</th>
+          <th scope="col">Name</th>
+          <th scope="col">Cloud</th>
+          <th scope="col">SKU</th>
+          <th scope="col">Family</th>
         </tr>
       </thead>
-      <tbody id="tbody"></tbody>
+      <tbody id="rows"></tbody>
     </table>
-    <section class="detail" id="detail">
-      <h2>Product detail</h2>
-      <dl id="detail-dl"></dl>
+    <section id="panel" aria-labelledby="ph">
+      <h2 id="ph">Detail</h2>
+      <dl id="fields"></dl>
     </section>
   </main>
   <footer>
-    APIs: <a href="/api/products">/api/products</a> · Click a row for JSON detail
+    <a href="/api/products">/api/products</a>
+    ·
+    <a href="/api/health">/api/health</a>
   </footer>
   <script>
-    const statusEl = document.getElementById("status");
-    const tbody = document.getElementById("tbody");
-    const tbl = document.getElementById("tbl");
-    const detail = document.getElementById("detail");
-    const detailDl = document.getElementById("detail-dl");
+(function () {
+  var msg = document.getElementById("msg");
+  var grid = document.getElementById("grid");
+  var rows = document.getElementById("rows");
+  var panel = document.getElementById("panel");
+  var fields = document.getElementById("fields");
 
-    async function load() {
-      try {
-        const r = await fetch("/api/products");
-        if (!r.ok) throw new Error(r.status + " " + r.statusText);
-        const products = await r.json();
-        statusEl.textContent = products.length + " products";
-        statusEl.classList.remove("err");
-        tbody.innerHTML = products.map(p => `
-          <tr data-id="${p.id}" style="cursor:pointer">
-            <td><code>${escapeHtml(p.id)}</code></td>
-            <td>${escapeHtml(p.name)}</td>
-            <td><span class="cloud ${escapeHtml(p.cloud)}">${escapeHtml(p.cloud)}</span></td>
-            <td><code>${escapeHtml(p.sku)}</code></td>
-            <td>${escapeHtml(p.family || "—")}</td>
-          </tr>
-        `).join("");
-        tbl.style.display = "";
-        tbody.querySelectorAll("tr").forEach(tr => {
-          tr.addEventListener("click", () => showDetail(tr.dataset.id));
-        });
-      } catch (e) {
-        statusEl.textContent = "Could not load products: " + e.message;
-        statusEl.classList.add("err");
-      }
-    }
+  function esc(s) {
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
 
-    function escapeHtml(s) {
-      const d = document.createElement("div");
-      d.textContent = s;
-      return d.innerHTML;
-    }
-
-    async function showDetail(id) {
-      detail.classList.add("visible");
-      detailDl.innerHTML = "<dt>…</dt><dd>Loading</dd>";
-      try {
-        const r = await fetch("/api/products/" + encodeURIComponent(id));
-        const p = await r.json();
+  function rowClick(id) {
+    panel.classList.add("open");
+    fields.innerHTML = "<dt>…</dt><dd>Loading</dd>";
+    fetch("/api/products/" + encodeURIComponent(id))
+      .then(function (r) { return r.json(); })
+      .then(function (p) {
         if (p.error) {
-          detailDl.innerHTML = "<dt>Error</dt><dd>" + escapeHtml(p.error) + "</dd>";
+          fields.innerHTML = "<dt>Error</dt><dd>" + esc(p.error) + "</dd>";
           return;
         }
-        detailDl.innerHTML = ["id", "name", "cloud", "sku", "family"].map(k => {
-          const v = p[k] != null ? String(p[k]) : "—";
-          return `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`;
+        fields.innerHTML = ["id", "name", "cloud", "sku", "family"].map(function (k) {
+          var v = p[k] != null ? String(p[k]) : "—";
+          return "<dt>" + esc(k) + "</dt><dd>" + esc(v) + "</dd>";
         }).join("");
-      } catch (e) {
-        detailDl.innerHTML = "<dt>Error</dt><dd>" + escapeHtml(e.message) + "</dd>";
-      }
-    }
+      })
+      .catch(function (e) {
+        fields.innerHTML = "<dt>Error</dt><dd>" + esc(e.message) + "</dd>";
+      });
+  }
 
-    load();
+  fetch("/api/products")
+    .then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    })
+    .then(function (list) {
+      msg.textContent = list.length + " products";
+      msg.classList.remove("err");
+      rows.innerHTML = list.map(function (p) {
+        return (
+          "<tr tabindex=\"0\" data-id=\"" + esc(p.id) + "\">" +
+          "<td><code>" + esc(p.id) + "</code></td>" +
+          "<td>" + esc(p.name) + "</td>" +
+          "<td><span class=\"tag " + esc(p.cloud) + "\">" + esc(p.cloud) + "</span></td>" +
+          "<td><code>" + esc(p.sku) + "</code></td>" +
+          "<td>" + esc(p.family || "—") + "</td>" +
+          "</tr>"
+        );
+      }).join("");
+      grid.hidden = false;
+      rows.querySelectorAll("tr").forEach(function (tr) {
+        var id = tr.getAttribute("data-id");
+        tr.addEventListener("click", function () { rowClick(id); });
+        tr.addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            rowClick(id);
+          }
+        });
+      });
+    })
+    .catch(function (e) {
+      msg.textContent = "Failed: " + e.message;
+      msg.classList.add("err");
+    });
+})();
   </script>
 </body>
 </html>
